@@ -79,8 +79,14 @@ export default function BookDetailModal({ isOpen, onClose, book }) {
           </div>
         </div>
 
-        <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+        <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           독서 감상평 모아보기 ({reviews.length}개)
+          {reviews.length > 0 && (
+            <span style={{ fontSize: '1rem', color: 'var(--accent-secondary)', display: 'flex', alignItems: 'center', gap: '0.2rem', marginLeft: 'auto' }}>
+              <Star fill="currentColor" size={16} />
+              {(reviews.reduce((acc, rev) => acc + Number(rev.rating || 0), 0) / reviews.length).toFixed(1)}
+            </span>
+          )}
         </h3>
         
         {loading ? (
