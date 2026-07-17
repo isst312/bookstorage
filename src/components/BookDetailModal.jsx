@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { X, Star, User } from 'lucide-react';
+import { X, Star, User, Trash2 } from 'lucide-react';
 
 export default function BookDetailModal({ isOpen, onClose, book }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (isOpen && book) {
@@ -19,8 +20,8 @@ export default function BookDetailModal({ isOpen, onClose, book }) {
             
           const querySnapshot = await getDocs(q);
           const reviewData = [];
-          querySnapshot.forEach((doc) => {
-            reviewData.push({ id: doc.id, ...doc.data() });
+          querySnapshot.forEach((document) => {
+            reviewData.push({ id: document.id, ...document.data() });
           });
           
           // Sort reviews by date
@@ -37,6 +38,21 @@ export default function BookDetailModal({ isOpen, onClose, book }) {
     }
   }, [isOpen, book]);
 
+  const handleDelete = async () => {
+    if (window.confirm('정말로 이 책을 내 책장에서 삭제하시겠습니까? (이 작업은 되돌릴 수 없습니다)')) {
+      setIsDeleting(true);
+      try {
+        await deleteDoc(doc(db, 'books', book.id));
+        onClose(); // Delete successful, close modal
+      } catch (error) {
+        console.error("Error deleting book:", error);
+        alert('삭제 중 오류가 발생했습니다.');
+      } finally {
+        setIsDeleting(false);
+      }
+    }
+  };
+
   if (!isOpen || !book) return null;
 
   return (
@@ -51,12 +67,22 @@ export default function BookDetailModal({ isOpen, onClose, book }) {
         width: '90%', maxWidth: '600px', maxHeight: '90vh',
         overflowY: 'auto', padding: '2rem', position: 'relative'
       }}>
-        <button 
-          onClick={onClose}
-          style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}
-        >
-          <X size={24} />
-        </button>
+        <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', display: 'flex', gap: '1rem' }}>
+          <button 
+            onClick={handleDelete}
+            disabled={isDeleting}
+            title="내 책장에서 삭제하기"
+            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: isDeleting ? 'wait' : 'pointer', opacity: isDeleting ? 0.5 : 1 }}
+          >
+            <Trash2 size={24} />
+          </button>
+          <button 
+            onClick={onClose}
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}
+          >
+            <X size={24} />
+          </button>
+        </div>
 
         <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', marginTop: '1rem' }}>
           <img 
