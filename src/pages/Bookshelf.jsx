@@ -152,9 +152,9 @@ export default function Bookshelf() {
                         const heightVariation = book.id ? (book.id.charCodeAt(0) % 5) * 15 : 0;
                         const spineHeight = 170 + heightVariation;
 
-                        // Calculate thickness based on page count (150p ~ 650p -> 25px ~ 80px)
+                        // Calculate thickness based on page count (150p ~ 650p -> 16px ~ 110px for extreme difference)
                         const pageCount = book.pageCount || 250;
-                        const spineThickness = Math.max(25, Math.min(80, 25 + ((pageCount - 150) / 500) * 55));
+                        const spineThickness = Math.max(16, Math.min(110, 16 + ((pageCount - 150) / 500) * 94));
 
                         // Calculate dynamic font size to prevent ellipsis (...)
                         const maxTextSpace = spineHeight * 0.85;
