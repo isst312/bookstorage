@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
-import { LogOut, Plus, Search } from 'lucide-react';
+import { LogOut, Plus, Search, BookOpen } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import AddBookModal from '../components/AddBookModal';
+import BookDetailModal from '../components/BookDetailModal';
 
 // Categories and their colors
 const CATEGORIES = {
@@ -26,6 +28,8 @@ const CATEGORY_DESC = {
 export default function Bookshelf() {
   const [userName, setUserName] = useState('');
   const [books, setBooks] = useState([]);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedDetailBook, setSelectedDetailBook] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -97,7 +101,7 @@ export default function Bookshelf() {
               className="btn btn-primary btn-icon" 
               style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', zIndex: 10 }}
               title="책 추가하기"
-              onClick={() => alert("책 추가 모달이 열릴 예정입니다!")}
+              onClick={() => setIsAddModalOpen(true)}
             >
               <Plus size={24} />
             </button>
@@ -118,6 +122,7 @@ export default function Bookshelf() {
                   <div 
                     key={book.id} 
                     className="glass-panel" 
+                    onClick={() => setSelectedDetailBook(book)}
                     style={{ 
                       padding: '1rem', 
                       display: 'flex', 
@@ -212,6 +217,18 @@ export default function Bookshelf() {
         </div>
 
       </div>
+      
+      <AddBookModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        userName={userName} 
+      />
+      
+      <BookDetailModal
+        isOpen={!!selectedDetailBook}
+        onClose={() => setSelectedDetailBook(null)}
+        book={selectedDetailBook}
+      />
     </div>
   );
 }
