@@ -171,6 +171,7 @@ export default function Bookshelf() {
                             style={{ 
                               width: `${spineThickness}px`, 
                               height: `${spineHeight}px`,
+                              flexShrink: 0, // Prevent shrinking on mobile
                               backgroundColor: CATEGORIES[book.category] || CATEGORIES['000: 총류'],
                               borderRadius: '4px 4px 0 0',
                               border: '1px solid rgba(0,0,0,0.4)',
