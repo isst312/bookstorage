@@ -165,6 +165,15 @@ export default function Bookshelf() {
                   const pageCount = book.pageCount || 250;
                   const spineThickness = Math.max(25, Math.min(80, 25 + ((pageCount - 150) / 500) * 55));
 
+                  // Calculate dynamic font size to prevent ellipsis (...)
+                  // We assume maximum text space is about 85% of the spine height.
+                  const maxTextSpace = spineHeight * 0.85;
+                  const estimatedFontSize = Math.floor(maxTextSpace / book.title.length);
+                  let dynamicFontSize = Math.max(9, Math.min(15, estimatedFontSize)); // clamp between 9px and 15px
+                  if (spineThickness < 35) {
+                    dynamicFontSize = Math.min(dynamicFontSize, 12); // thinner books have smaller max font
+                  }
+
                   return (
                     <div 
                       key={book.id} 
@@ -197,11 +206,10 @@ export default function Bookshelf() {
                         writingMode: 'vertical-rl', 
                         color: 'rgba(0,0,0,0.85)', 
                         fontWeight: '800', 
-                        fontSize: spineThickness < 35 ? '0.75rem' : '0.95rem', // Smaller text for very thin books
+                        fontSize: `${dynamicFontSize}px`,
                         letterSpacing: '1px',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
-                        textOverflow: 'ellipsis',
                         maxHeight: '90%',
                         fontFamily: "'Outfit', sans-serif"
                       }}>
