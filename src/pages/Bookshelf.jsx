@@ -53,8 +53,22 @@ export default function Bookshelf() {
     const q = query(collection(db, 'books'), where('userName', '==', user));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const bookData = [];
+      const OLD_TO_KDC = {
+        '문학': '800: 문학',
+        '인문': '900: 역사',
+        '과학': '400: 자연과학',
+        '실용': '300: 사회과학',
+        '마음': '100: 철학',
+        '기타': '000: 총류'
+      };
+
       snapshot.forEach((doc) => {
-        bookData.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        // Backward compatibility for old books added before KDC update
+        if (OLD_TO_KDC[data.category]) {
+          data.category = OLD_TO_KDC[data.category];
+        }
+        bookData.push({ id: doc.id, ...data });
       });
       // Sort by createdAt descending
       bookData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
