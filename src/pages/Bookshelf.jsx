@@ -117,43 +117,71 @@ export default function Bookshelf() {
                 <p>우측 상단의 '+' 버튼을 눌러 첫 번째 책을 기록해 보세요!</p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1.5rem' }}>
-                {books.map((book) => (
-                  <div 
-                    key={book.id} 
-                    className="glass-panel" 
-                    onClick={() => setSelectedDetailBook(book)}
-                    style={{ 
-                      padding: '1rem', 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      alignItems: 'center', 
-                      cursor: 'pointer',
-                      borderLeft: `4px solid ${CATEGORIES[book.category] || CATEGORIES['기타']}`
-                    }}
-                  >
-                    <div style={{ 
-                      width: '80px', 
-                      height: '110px', 
-                      background: 'rgba(255,255,255,0.1)', 
-                      borderRadius: '4px',
-                      marginBottom: '1rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden'
-                    }}>
-                      {book.thumbnail ? (
-                        <img src={book.thumbnail} alt={book.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <BookOpen size={32} opacity={0.5} />
-                      )}
+              <div style={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                alignItems: 'flex-end',
+                gap: '2px', // Books very close to each other
+                padding: '1rem 1rem 0 1rem', 
+                minHeight: '260px',
+                borderBottom: '20px solid #5c4033', // Wooden shelf base
+                borderLeft: '12px solid #4a332a',   // Left wall
+                borderRight: '12px solid #4a332a',  // Right wall
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6))', // Shadow inside shelf
+                boxShadow: 'inset 0 -15px 20px rgba(0,0,0,0.6), 0 10px 15px rgba(0,0,0,0.3)',
+                borderRadius: '4px',
+                marginBottom: '2rem'
+              }}>
+                {books.map((book) => {
+                  // Generate a pseudo-random height based on book ID so the shelf looks natural
+                  const heightVariation = book.id ? (book.id.charCodeAt(0) % 5) * 15 : 0;
+                  const spineHeight = 170 + heightVariation;
+
+                  return (
+                    <div 
+                      key={book.id} 
+                      onClick={() => setSelectedDetailBook(book)}
+                      style={{ 
+                        width: '45px', 
+                        height: `${spineHeight}px`,
+                        backgroundColor: CATEGORIES[book.category] || CATEGORIES['기타'],
+                        borderRadius: '4px 4px 0 0',
+                        border: '1px solid rgba(0,0,0,0.4)',
+                        borderLeft: '3px solid rgba(255,255,255,0.35)', // 3D highlight effect on the spine
+                        boxShadow: '-3px 0 6px rgba(0,0,0,0.4)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        position: 'relative'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-15px) scale(1.02)';
+                        e.currentTarget.style.zIndex = 10;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                        e.currentTarget.style.zIndex = 1;
+                      }}
+                    >
+                      <span style={{ 
+                        writingMode: 'vertical-rl', 
+                        color: 'rgba(0,0,0,0.85)', 
+                        fontWeight: '800', 
+                        fontSize: '0.95rem', 
+                        letterSpacing: '1px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxHeight: '90%',
+                        fontFamily: "'Outfit', sans-serif"
+                      }}>
+                        {book.title}
+                      </span>
                     </div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {book.title}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
