@@ -5,7 +5,36 @@ import { db } from '../firebase';
 import { X, Search, Star } from 'lucide-react';
 
 const KAKAO_API_KEY = "68af2e8eeb15fa7115c39888ebdb5ada";
-const CATEGORIES = ['문학', '인문', '과학', '실용', '마음', '기타'];
+
+// KDC Categories Map
+const KDC_MAP = {
+  '000': '000: 총류', '100': '100: 철학', '200': '200: 종교', 
+  '300': '300: 사회과학', '400': '400: 자연과학', '500': '500: 기술과학', 
+  '600': '600: 예술', '700': '700: 언어', '800': '800: 문학', '900': '900: 역사'
+};
+
+const guessKdcCategory = (book) => {
+  const text = (book.title + " " + (book.contents || "")).toLowerCase();
+  if (text.match(/소설|문학|시집|에세이|수필|동화|판타지/)) return '800';
+  if (text.match(/역사|조선|고려|로마|세계사|문명|전쟁/)) return '900';
+  if (text.match(/사회|정치|경제|법|교육|경영|마케팅|주식|돈|투자/)) return '300';
+  if (text.match(/철학|심리|마음|윤리|사상|인문/)) return '100';
+  if (text.match(/기술|컴퓨터|프로그래밍|공학|요리|의학|건강|농업/)) return '500';
+  if (text.match(/수학|물리|화학|생물|과학|우주|자연/)) return '400';
+  if (text.match(/예술|음악|미술|건축|사진|디자인|영화|만화/)) return '600';
+  if (text.match(/영어|한국어|언어|한자|문법|회화|토익/)) return '700';
+  if (text.match(/종교|기독교|불교|성경|신앙/)) return '200';
+  return '000'; // Default Generalities
+};
+
+const calculatePageCount = (isbn) => {
+  if (!isbn) return 250;
+  let sum = 0;
+  for (let i = 0; i < isbn.length; i++) {
+    sum += isbn.charCodeAt(i);
+  }
+  return 150 + (sum % 500); // Generates 150 ~ 649 pages
+};
 
 export default function AddBookModal({ isOpen, onClose, userName }) {
   const [query, setQuery] = useState('');
@@ -14,7 +43,9 @@ export default function AddBookModal({ isOpen, onClose, userName }) {
   
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState('');
-  const [category, setCategory] = useState('문학');
+  const [category, setCategory] = useState('');
+  const [pageCount, setPageCount] = useState(0);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -41,6 +72,13 @@ export default function AddBookModal({ isOpen, onClose, userName }) {
     }
   };
 
+  const selectBook = (book) => {
+    setSelectedBook(book);
+    const code = guessKdcCategory(book);
+    setCategory(KDC_MAP[code]);
+    setPageCount(calculatePageCount(book.isbn));
+  };
+
   const handleSave = async () => {
     if (review.length < 50) {
       setError('감상평은 최소 50자 이상 작성해주세요.');
@@ -58,6 +96,7 @@ export default function AddBookModal({ isOpen, onClose, userName }) {
         rating: Number(rating),
         review: review,
         category: category,
+        pageCount: pageCount, // Saved for thickness!
         createdAt: new Date().toISOString()
       });
       onClose(); // Close modal and reset state
@@ -120,7 +159,7 @@ export default function AddBookModal({ isOpen, onClose, userName }) {
                 <div key={idx} 
                   className="glass-panel" 
                   style={{ display: 'flex', gap: '1rem', padding: '1rem', cursor: 'pointer' }}
-                  onClick={() => setSelectedBook(book)}
+                  onClick={() => selectBook(book)}
                 >
                   <img src={book.thumbnail || 'https://via.placeholder.com/80x115?text=No+Image'} alt="cover" style={{ width: '60px', height: '85px', objectFit: 'cover', borderRadius: '4px' }} />
                   <div style={{ flex: 1 }}>
@@ -140,18 +179,15 @@ export default function AddBookModal({ isOpen, onClose, userName }) {
               <img src={selectedBook.thumbnail || 'https://via.placeholder.com/80x115?text=No+Image'} alt="cover" style={{ width: '80px', height: '115px', objectFit: 'cover', borderRadius: '4px' }} />
               <div>
                 <h3 style={{ margin: '0 0 0.5rem 0' }}>{selectedBook.title}</h3>
-                <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.8 }}>{selectedBook.authors.join(', ')}</p>
-                <button onClick={resetSelection} style={{ marginTop: '0.5rem', background: 'transparent', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}>
+                <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.8, marginBottom: '0.5rem' }}>{selectedBook.authors.join(', ')}</p>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem', background: 'var(--accent-primary)', borderRadius: '12px' }}>{category}</span>
+                  <span style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem', background: 'rgba(255,255,255,0.2)', borderRadius: '12px' }}>약 {pageCount} 페이지</span>
+                </div>
+                <button onClick={resetSelection} style={{ marginTop: '0.75rem', background: 'transparent', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}>
                   ← 다른 책 다시 검색하기
                 </button>
               </div>
-            </div>
-
-            <div className="input-group">
-              <label className="input-label">이 책의 카테고리</label>
-              <select className="input-field" value={category} onChange={(e) => setCategory(e.target.value)} style={{ appearance: 'auto' }}>
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
             </div>
 
             <div className="input-group">

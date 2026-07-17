@@ -7,22 +7,31 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import AddBookModal from '../components/AddBookModal';
 import BookDetailModal from '../components/BookDetailModal';
 
-// Categories and their colors
+// KDC Categories and their colors
 const CATEGORIES = {
-  '문학': '#ff8787',
-  '인문': '#fcc419',
-  '과학': '#38d9a9',
-  '실용': '#4dabf7',
-  '마음': '#b197fc',
-  '기타': '#ced4da'
+  '000: 총류': '#ced4da',    // Gray
+  '100: 철학': '#fcc419',    // Yellow
+  '200: 종교': '#e6a8d7',    // Pinkish
+  '300: 사회과학': '#4dabf7',  // Blue
+  '400: 자연과학': '#38d9a9',  // Teal
+  '500: 기술과학': '#74c0fc',  // Light Blue
+  '600: 예술': '#b197fc',    // Purple
+  '700: 언어': '#ff922b',    // Orange
+  '800: 문학': '#ff8787',    // Red
+  '900: 역사': '#a9e34b'     // Lime Green
 };
 
 const CATEGORY_DESC = {
-  '문학': '재미있는 이야기',
-  '과학': '궁금한 원리',
-  '인문': '역사와 세상 이야기',
-  '실용': '돈·생활 지식',
-  '마음': '감정과 마음을 배우는 책'
+  '000: 총류': '컴퓨터, 백과사전, 일반 상식',
+  '100: 철학': '철학, 심리학, 윤리학, 사상',
+  '200: 종교': '기독교, 불교, 신화 등',
+  '300: 사회과학': '정치, 경제, 법, 교육, 사회',
+  '400: 자연과학': '수학, 물리, 화학, 생물, 우주',
+  '500: 기술과학': '의학, 공학, 농업, 요리, 컴퓨터',
+  '600: 예술': '미술, 음악, 건축, 체육, 오락',
+  '700: 언어': '한국어, 영어 등 모든 언어',
+  '800: 문학': '시, 소설, 수필, 동화, 희곡',
+  '900: 역사': '역사, 지리, 문명, 위인전'
 };
 
 export default function Bookshelf() {
@@ -68,9 +77,10 @@ export default function Bookshelf() {
     });
     
     return Object.keys(counts).map(key => ({
-      name: key,
+      name: key.split(':')[0], // Only show '800' or '900' in chart labels
+      fullName: key,
       value: counts[key],
-      color: CATEGORIES[key] || CATEGORIES['기타']
+      color: CATEGORIES[key] || '#ced4da'
     }));
   };
 
@@ -137,14 +147,18 @@ export default function Bookshelf() {
                   const heightVariation = book.id ? (book.id.charCodeAt(0) % 5) * 15 : 0;
                   const spineHeight = 170 + heightVariation;
 
+                  // Calculate thickness based on page count (150p ~ 650p -> 25px ~ 80px)
+                  const pageCount = book.pageCount || 250;
+                  const spineThickness = Math.max(25, Math.min(80, 25 + ((pageCount - 150) / 500) * 55));
+
                   return (
                     <div 
                       key={book.id} 
                       onClick={() => setSelectedDetailBook(book)}
                       style={{ 
-                        width: '45px', 
+                        width: `${spineThickness}px`, 
                         height: `${spineHeight}px`,
-                        backgroundColor: CATEGORIES[book.category] || CATEGORIES['기타'],
+                        backgroundColor: CATEGORIES[book.category] || CATEGORIES['000: 총류'],
                         borderRadius: '4px 4px 0 0',
                         border: '1px solid rgba(0,0,0,0.4)',
                         borderLeft: '3px solid rgba(255,255,255,0.35)', // 3D highlight effect on the spine
@@ -169,7 +183,7 @@ export default function Bookshelf() {
                         writingMode: 'vertical-rl', 
                         color: 'rgba(0,0,0,0.85)', 
                         fontWeight: '800', 
-                        fontSize: '0.95rem', 
+                        fontSize: spineThickness < 35 ? '0.75rem' : '0.95rem', // Smaller text for very thin books
                         letterSpacing: '1px',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
@@ -190,7 +204,7 @@ export default function Bookshelf() {
         {/* Right Side: Stats (Pie Chart) & Categories info */}
         <div>
           <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>나의 독서 취향</h2>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>나의 독서 취향 (KDC)</h2>
             
             {books.length > 0 ? (
               <div style={{ height: '250px', width: '100%' }}>
@@ -212,6 +226,7 @@ export default function Bookshelf() {
                     <Tooltip 
                       contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
                       itemStyle={{ color: 'var(--text-primary)' }}
+                      formatter={(value, name, props) => [value + '권', props.payload.fullName]}
                     />
                     <Legend />
                   </PieChart>
@@ -225,19 +240,23 @@ export default function Bookshelf() {
           </div>
 
           <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', opacity: 0.8 }}>카테고리 설명</h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem' }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', opacity: 0.8 }}>한국십진분류법(KDC) 안내</h3>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.85rem' }}>
               {Object.entries(CATEGORY_DESC).map(([key, desc]) => (
-                <li key={key} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <li key={key} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                   <span style={{ 
                     display: 'inline-block', 
                     width: '12px', 
                     height: '12px', 
                     borderRadius: '50%', 
                     backgroundColor: CATEGORIES[key], 
-                    marginRight: '0.75rem' 
+                    marginRight: '0.75rem',
+                    marginTop: '0.2rem'
                   }}></span>
-                  <strong>{key}</strong>: <span style={{ opacity: 0.8, marginLeft: '0.5rem' }}>{desc}</span>
+                  <div>
+                    <strong style={{ display: 'block', marginBottom: '0.2rem' }}>{key}</strong>
+                    <span style={{ opacity: 0.8 }}>{desc}</span>
+                  </div>
                 </li>
               ))}
             </ul>
