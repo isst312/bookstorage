@@ -115,10 +115,10 @@ export default function Bookshelf() {
         </button>
       </header>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+      <div className="bookshelf-layout">
         
         {/* Left Side: Bookshelf */}
-        <div style={{ gridColumn: 'span 2' }}>
+        <div>
           <div className="glass-panel" style={{ padding: '2rem', minHeight: '60vh', position: 'relative' }}>
             {/* Add Button */}
             <button 
@@ -146,20 +146,7 @@ export default function Bookshelf() {
                   const shelfBooks = books.slice(shelfIndex * 20, (shelfIndex + 1) * 20);
                   
                   return (
-                    <div key={shelfIndex} style={{ 
-                      display: 'flex', 
-                      flexWrap: 'nowrap',
-                      alignItems: 'flex-end',
-                      gap: '2px', 
-                      padding: '1rem 1rem 0 1rem', 
-                      minHeight: '260px',
-                      borderBottom: '20px solid #5c4033', // Wooden shelf base
-                      borderLeft: '12px solid #4a332a',   // Left wall
-                      borderRight: '12px solid #4a332a',  // Right wall
-                      background: 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6))', // Shadow inside shelf
-                      boxShadow: 'inset 0 -15px 20px rgba(0,0,0,0.6), 0 10px 15px rgba(0,0,0,0.3)',
-                      borderRadius: '4px'
-                    }}>
+                    <div key={shelfIndex} className="shelf-container">
                       {shelfBooks.map((book) => {
                         // Generate a pseudo-random height based on book ID so the shelf looks natural
                         const heightVariation = book.id ? (book.id.charCodeAt(0) % 5) * 15 : 0;
