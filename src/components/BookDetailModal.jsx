@@ -1,16 +1,27 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { X, Star, User, Trash2 } from 'lucide-react';
+import { X, Star, User, Trash2, Edit2 } from 'lucide-react';
 
 export default function BookDetailModal({ isOpen, onClose, book }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editReview, setEditReview] = useState('');
+  const [editRating, setEditRating] = useState(5);
+  const [isUpdating, setIsUpdating] = useState(false);
 
+  // Sync state when book changes
   useEffect(() => {
-    if (isOpen && book) {
-      const fetchReviews = async () => {
+    if (book) {
+      setEditReview(book.review || '');
+      setEditRating(book.rating || 5);
+      setIsEditing(false);
+    }
+  }, [book]);
+
+  const fetchReviews = async () => {
         setLoading(true);
         try {
           // Fetch reviews for the exact same book (using ISBN if available, else title)
@@ -37,6 +48,34 @@ export default function BookDetailModal({ isOpen, onClose, book }) {
       fetchReviews();
     }
   }, [isOpen, book]);
+
+  const handleUpdate = async () => {
+    if (!editReview.trim()) {
+      alert('감상평을 입력해주세요.');
+      return;
+    }
+    
+    setIsUpdating(true);
+    try {
+      await updateDoc(doc(db, 'books', book.id), {
+        review: editReview,
+        rating: editRating
+      });
+      
+      // Update local book object to reflect changes immediately
+      book.review = editReview;
+      book.rating = editRating;
+      
+      // Refetch reviews
+      await fetchReviews();
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating review:", error);
+      alert('수정 중 오류가 발생했습니다.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (window.confirm('정말로 이 책을 내 책장에서 삭제하시겠습니까? (이 작업은 되돌릴 수 없습니다)')) {
@@ -68,6 +107,15 @@ export default function BookDetailModal({ isOpen, onClose, book }) {
         overflowY: 'auto', padding: '2rem', position: 'relative'
       }}>
         <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', display: 'flex', gap: '1rem' }}>
+          {!isEditing && (
+            <button 
+              onClick={() => setIsEditing(true)}
+              title="내 감상평 수정하기"
+              style={{ background: 'transparent', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer' }}
+            >
+              <Edit2 size={24} />
+            </button>
+          )}
           <button 
             onClick={handleDelete}
             disabled={isDeleting}
@@ -86,22 +134,60 @@ export default function BookDetailModal({ isOpen, onClose, book }) {
 
         <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', marginTop: '1rem' }}>
           <img 
-            src={book.thumbnail || 'https://via.placeholder.com/120x170?text=No+Image'} 
+            src={book.thumbnail || 'https://via.placeholder.com/120x174?text=No+Image'} 
             alt="cover" 
-            style={{ width: '120px', height: '170px', objectFit: 'cover', borderRadius: '8px', boxShadow: 'var(--shadow-glass)' }} 
+            style={{ width: '100px', height: '145px', objectFit: 'cover', borderRadius: '4px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}
           />
-          <div>
-            <span style={{ display: 'inline-block', padding: '0.25rem 0.75rem', background: 'var(--accent-primary)', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-              {book.category}
-            </span>
-            <h2 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>{book.title}</h2>
-            <p style={{ margin: 0, opacity: 0.8, marginBottom: '1rem' }}>
-              {Array.isArray(book.authors) ? book.authors.join(', ') : book.authors}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', lineHeight: '1.2' }}>{book.title}</h2>
+            <p style={{ margin: '0 0 1rem 0', opacity: 0.7, fontSize: '0.9rem' }}>
+              {book.authors?.join(', ')} | {book.publisher} | {book.category}
             </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--accent-secondary)', fontWeight: 'bold' }}>
-              <Star fill="currentColor" size={18} />
-              <span>{book.rating} / 5.0</span>
-            </div>
+            
+            {isEditing ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.9rem' }}>별점 수정:</span>
+                  <div style={{ display: 'flex', gap: '0.2rem' }}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Star 
+                        key={star} 
+                        size={20} 
+                        fill={star <= editRating ? "var(--accent-secondary)" : "none"}
+                        color={star <= editRating ? "var(--accent-secondary)" : "rgba(255,255,255,0.3)"}
+                        onClick={() => setEditRating(star)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <textarea 
+                  value={editReview}
+                  onChange={(e) => setEditReview(e.target.value)}
+                  style={{ 
+                    flex: 1, 
+                    padding: '0.5rem', 
+                    borderRadius: '4px', 
+                    background: 'rgba(255,255,255,0.05)', 
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    color: 'white',
+                    resize: 'none',
+                    minHeight: '60px'
+                  }}
+                />
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                  <button onClick={() => setIsEditing(false)} className="btn btn-outline" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>취소</button>
+                  <button onClick={handleUpdate} disabled={isUpdating} className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
+                    {isUpdating ? '저장 중...' : '저장하기'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p style={{ margin: 0, padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '0.95rem', lineHeight: '1.6', flex: 1, overflowY: 'auto' }}>
+                <strong style={{ color: 'var(--accent-secondary)', display: 'block', marginBottom: '0.5rem' }}>내 감상평</strong>
+                {book.review}
+              </p>
+            )}
           </div>
         </div>
 
