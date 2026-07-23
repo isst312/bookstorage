@@ -28,7 +28,7 @@ export default function Admin() {
         usersSnapshot.forEach((doc) => {
           stats[doc.id] = {
             name: doc.id,
-            pin: doc.data().password,
+            pin: doc.data().pin, // Fixed field name
             books: [],
             lastActive: doc.data().createdAt || new Date().toISOString()
           };
