@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { X, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Star, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 
-export default function AdminUserModal({ isOpen, onClose, userName, userBooks }) {
+export default function AdminUserModal({ isOpen, onClose, userName, userPin, userBooks, onBookDeleted }) {
   const [expandedBookId, setExpandedBookId] = useState(null);
 
   if (!isOpen) return null;
@@ -11,6 +11,13 @@ export default function AdminUserModal({ isOpen, onClose, userName, userBooks })
       setExpandedBookId(null);
     } else {
       setExpandedBookId(bookId);
+    }
+  };
+
+  const handleDeleteClick = (e, bookId) => {
+    e.stopPropagation();
+    if (window.confirm('정말로 이 학생의 독서 기록을 강제로 삭제하시겠습니까? (이 작업은 되돌릴 수 없습니다)')) {
+      onBookDeleted(bookId);
     }
   };
 
@@ -28,14 +35,19 @@ export default function AdminUserModal({ isOpen, onClose, userName, userBooks })
         position: 'relative', overflow: 'hidden'
       }}>
         {/* Header */}
-        <div style={{ padding: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ padding: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h2 style={{ fontSize: '1.5rem', margin: 0 }}>
+            <h2 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ color: 'var(--accent-primary)' }}>{userName}</span> 학생의 독서 기록
+              {userPin && (
+                <span style={{ fontSize: '0.9rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: '#fbbf24', marginLeft: '0.5rem' }}>
+                  PIN: {userPin}
+                </span>
+              )}
             </h2>
             <p style={{ margin: 0, opacity: 0.7, marginTop: '0.5rem' }}>총 {userBooks.length}권의 책을 읽었습니다.</p>
           </div>
-          <button 
+          <button  
             onClick={onClose}
             style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '0.5rem' }}
           >
@@ -95,10 +107,21 @@ export default function AdminUserModal({ isOpen, onClose, userName, userBooks })
                     <div style={{ 
                       padding: '1.5rem', 
                       borderTop: '1px solid rgba(255,255,255,0.1)',
-                      background: 'rgba(0,0,0,0.2)'
+                      background: 'rgba(0,0,0,0.2)',
+                      position: 'relative'
                     }} className="animate-fade-in">
-                      <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--accent-primary)' }}>감상평</h4>
-                      <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                      <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem' }}>
+                        <button 
+                          onClick={(e) => handleDeleteClick(e, book.id)}
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0.8 }}
+                          title="이 기록 삭제하기"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </div>
+                      
+                      <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--accent-primary)', paddingRight: '2rem' }}>감상평</h4>
+                      <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap', paddingRight: '2rem' }}>
                         {book.review}
                       </p>
                       <div style={{ textAlign: 'right', marginTop: '1rem', fontSize: '0.8rem', opacity: 0.5 }}>

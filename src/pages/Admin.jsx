@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { LogOut, Users, BookOpen } from 'lucide-react';
 import AdminUserModal from '../components/AdminUserModal';
@@ -21,10 +21,22 @@ export default function Admin() {
 
     const fetchAllData = async () => {
       try {
+        // Fetch all users to get PIN numbers
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        const stats = {};
+        
+        usersSnapshot.forEach((doc) => {
+          stats[doc.id] = {
+            name: doc.id,
+            pin: doc.data().password,
+            books: [],
+            lastActive: doc.data().createdAt || new Date().toISOString()
+          };
+        });
+
+        // Fetch all books
         const q = query(collection(db, 'books'), orderBy('createdAt', 'desc'));
         const snapshot = await getDocs(q);
-        
-        const stats = {};
         
         snapshot.forEach((doc) => {
           const book = { id: doc.id, ...doc.data() };
@@ -33,11 +45,16 @@ export default function Admin() {
           if (!stats[userName]) {
             stats[userName] = {
               name: userName,
+              pin: '알 수 없음',
               books: [],
               lastActive: book.createdAt
             };
           }
           stats[userName].books.push(book);
+          // Update lastActive if book is newer
+          if (new Date(book.createdAt) > new Date(stats[userName].lastActive)) {
+            stats[userName].lastActive = book.createdAt;
+          }
         });
 
         setUserStats(stats);
@@ -54,6 +71,32 @@ export default function Admin() {
   const handleLogout = () => {
     localStorage.removeItem('bookstorage_admin');
     navigate('/');
+  };
+
+  const handleBookDeleted = async (userName, bookId) => {
+    try {
+      await deleteDoc(doc(db, 'books', bookId));
+      
+      // Update UI locally
+      setUserStats(prev => {
+        const newStats = { ...prev };
+        if (newStats[userName]) {
+          newStats[userName].books = newStats[userName].books.filter(b => b.id !== bookId);
+        }
+        return newStats;
+      });
+
+      // Update selected user to reflect changes in modal
+      setSelectedUser(prev => {
+        if (prev && prev.name === userName) {
+          return { ...prev, books: prev.books.filter(b => b.id !== bookId) };
+        }
+        return prev;
+      });
+    } catch (error) {
+      console.error("Error deleting book as admin:", error);
+      alert("삭제 중 오류가 발생했습니다.");
+    }
   };
 
   const usersList = Object.values(userStats).sort((a, b) => b.books.length - a.books.length);
@@ -138,7 +181,9 @@ export default function Admin() {
         isOpen={!!selectedUser}
         onClose={() => setSelectedUser(null)}
         userName={selectedUser?.name}
+        userPin={selectedUser?.pin}
         userBooks={selectedUser?.books || []}
+        onBookDeleted={(bookId) => handleBookDeleted(selectedUser?.name, bookId)}
       />
     </div>
   );
