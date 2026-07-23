@@ -56,6 +56,11 @@ export default function BookDetailModal({ isOpen, onClose, book }) {
       alert('감상평을 입력해주세요.');
       return;
     }
+
+    if (editReview.trim().length < 50) {
+      alert('감상평은 최소 50자 이상 작성해야 합니다.');
+      return;
+    }
     
     setIsUpdating(true);
     try {

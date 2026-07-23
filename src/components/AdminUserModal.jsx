@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { X, Star, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { X, Star, ChevronDown, ChevronUp, Trash2, KeyRound } from 'lucide-react';
 
-export default function AdminUserModal({ isOpen, onClose, userName, userPin, userBooks, onBookDeleted }) {
+export default function AdminUserModal({ isOpen, onClose, userName, userPin, userBooks, onBookDeleted, onUpdatePin, onDeleteUser }) {
   const [expandedBookId, setExpandedBookId] = useState(null);
 
   if (!isOpen) return null;
@@ -39,18 +39,50 @@ export default function AdminUserModal({ isOpen, onClose, userName, userPin, use
           <div>
             <h2 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ color: 'var(--accent-primary)' }}>{userName}</span> 학생의 독서 기록
-              <span style={{ fontSize: '0.9rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: '#fbbf24', marginLeft: '0.5rem' }}>
-                PIN: {userPin || '정보 없음'}
-              </span>
+              {userPin ? (
+                <span style={{ fontSize: '0.9rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: '#fbbf24', marginLeft: '0.5rem' }}>
+                  PIN: {userPin}
+                </span>
+              ) : (
+                <span style={{ fontSize: '0.9rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: '#fbbf24', marginLeft: '0.5rem' }}>
+                  PIN: 정보 없음
+                </span>
+              )}
+              <button 
+                onClick={() => {
+                  const newPin = window.prompt('새로운 4자리 숫자 비밀번호를 입력하세요:');
+                  if (newPin && newPin.length === 4 && !isNaN(Number(newPin))) {
+                    onUpdatePin(newPin);
+                  } else if (newPin) {
+                    alert('비밀번호는 4자리 숫자여야 합니다.');
+                  }
+                }} 
+                className="btn btn-outline" 
+                style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem', marginLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
+                <KeyRound size={14} /> 변경
+              </button>
             </h2>
             <p style={{ margin: 0, opacity: 0.7, marginTop: '0.5rem' }}>총 {userBooks.length}권의 책을 읽었습니다.</p>
           </div>
-          <button  
-            onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '0.5rem' }}
-          >
-            <X size={24} />
-          </button>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <button 
+              onClick={() => {
+                if (window.confirm('정말로 이 학생의 계정과 모든 독서 기록을 영구적으로 삭제하시겠습니까? (이 작업은 되돌릴 수 없습니다)')) {
+                  onDeleteUser();
+                }
+              }}
+              style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.9rem', opacity: 0.8 }}
+            >
+              <Trash2 size={18} /> 계정 삭제
+            </button>
+            <button  
+              onClick={onClose}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '0.5rem' }}
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

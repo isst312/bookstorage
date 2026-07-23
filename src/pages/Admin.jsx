@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, orderBy, query, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, deleteDoc, doc, setDoc, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { LogOut, Users, BookOpen } from 'lucide-react';
 import AdminUserModal from '../components/AdminUserModal';
@@ -99,6 +99,57 @@ export default function Admin() {
     }
   };
 
+  const handleUpdatePin = async (userName, newPin) => {
+    try {
+      // Use setDoc with merge to ensure it works even if the user document doesn't exist yet
+      await setDoc(doc(db, 'users', userName), { pin: newPin, password: newPin }, { merge: true });
+      
+      setUserStats(prev => {
+        const newStats = { ...prev };
+        if (newStats[userName]) {
+          newStats[userName].pin = newPin;
+        }
+        return newStats;
+      });
+
+      setSelectedUser(prev => {
+        if (prev && prev.name === userName) {
+          return { ...prev, pin: newPin };
+        }
+        return prev;
+      });
+      alert('비밀번호가 성공적으로 변경되었습니다.');
+    } catch (error) {
+      console.error("Error updating pin:", error);
+      alert('비밀번호 변경 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleDeleteUser = async (userName) => {
+    try {
+      // 1. Delete all books for this user
+      const q = query(collection(db, 'books'), where('userName', '==', userName));
+      const snap = await getDocs(q);
+      const deletePromises = snap.docs.map(d => deleteDoc(doc(db, 'books', d.id)));
+      await Promise.all(deletePromises);
+      
+      // 2. Delete user document
+      await deleteDoc(doc(db, 'users', userName));
+      
+      // 3. Update UI
+      setUserStats(prev => {
+        const newStats = { ...prev };
+        delete newStats[userName];
+        return newStats;
+      });
+      setSelectedUser(null);
+      alert(`${userName} 학생의 계정과 모든 기록이 영구적으로 삭제되었습니다.`);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert('계정 삭제 중 오류가 발생했습니다.');
+    }
+  };
+
   const usersList = Object.values(userStats).sort((a, b) => b.books.length - a.books.length);
   const totalBooks = usersList.reduce((sum, user) => sum + user.books.length, 0);
 
@@ -184,6 +235,8 @@ export default function Admin() {
         userPin={selectedUser?.pin}
         userBooks={selectedUser?.books || []}
         onBookDeleted={(bookId) => handleBookDeleted(selectedUser?.name, bookId)}
+        onUpdatePin={(newPin) => handleUpdatePin(selectedUser?.name, newPin)}
+        onDeleteUser={() => handleDeleteUser(selectedUser?.name)}
       />
     </div>
   );
