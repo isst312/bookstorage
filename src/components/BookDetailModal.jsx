@@ -22,29 +22,31 @@ export default function BookDetailModal({ isOpen, onClose, book }) {
   }, [book]);
 
   const fetchReviews = async () => {
-        setLoading(true);
-        try {
-          // Fetch reviews for the exact same book (using ISBN if available, else title)
-          const q = book.isbn 
-            ? query(collection(db, 'books'), where('isbn', '==', book.isbn))
-            : query(collection(db, 'books'), where('title', '==', book.title));
-            
-          const querySnapshot = await getDocs(q);
-          const reviewData = [];
-          querySnapshot.forEach((document) => {
-            reviewData.push({ id: document.id, ...document.data() });
-          });
-          
-          // Sort reviews by date
-          reviewData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          setReviews(reviewData);
-        } catch (error) {
-          console.error("Error fetching reviews:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
+    setLoading(true);
+    try {
+      // Fetch reviews for the exact same book (using ISBN if available, else title)
+      const q = book.isbn 
+        ? query(collection(db, 'books'), where('isbn', '==', book.isbn))
+        : query(collection(db, 'books'), where('title', '==', book.title));
+        
+      const querySnapshot = await getDocs(q);
+      const reviewData = [];
+      querySnapshot.forEach((document) => {
+        reviewData.push({ id: document.id, ...document.data() });
+      });
+      
+      // Sort reviews by date
+      reviewData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setReviews(reviewData);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    if (isOpen && book) {
       fetchReviews();
     }
   }, [isOpen, book]);
