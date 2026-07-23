@@ -39,11 +39,9 @@ export default function AdminUserModal({ isOpen, onClose, userName, userPin, use
           <div>
             <h2 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ color: 'var(--accent-primary)' }}>{userName}</span> 학생의 독서 기록
-              {userPin && (
-                <span style={{ fontSize: '0.9rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: '#fbbf24', marginLeft: '0.5rem' }}>
-                  PIN: {userPin}
-                </span>
-              )}
+              <span style={{ fontSize: '0.9rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: '#fbbf24', marginLeft: '0.5rem' }}>
+                PIN: {userPin || '정보 없음'}
+              </span>
             </h2>
             <p style={{ margin: 0, opacity: 0.7, marginTop: '0.5rem' }}>총 {userBooks.length}권의 책을 읽었습니다.</p>
           </div>
